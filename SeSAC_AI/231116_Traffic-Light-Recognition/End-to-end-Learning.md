@@ -1,0 +1,402 @@
+# End-to-end Learning for Inter-Vehicle Distance and Relative Velocity
+# Estimation in ADAS with a Monocular Camera
+
+- paper: [https://arxiv.org/pdf/2006.04082v2.pdf](https://arxiv.org/pdf/2006.04082v2.pdf)
+- github: [https://github.com/ZhenboSong/mono_velocity](https://github.com/ZhenboSong/mono_velocity
+
+## 목표와 도전 과제
+
+- End-to-end 학습을 기반으로 1개의 단안 카메라 기반 차량 간 거리 및 상대 속도 추정
+- 2개의 연속 프레임을 바탕으로 원근 왜곡의 영향을 완화하기 위한 차량 중심 샘플링 메커니즘 제안
+
+
+## 방법론
+
+- 도로 표면과 카메라 높이 사이의 기하학적 제약을 활용하여 거리 추정의 스케일 모호성 해결
+- 2D 바운딩 박스가 3D 바운딩 박스 투영을 둘러싸고 있다고 가정하여 차량 거리 회귀 모델 제안
+	- 감지된 2D 바운딩 박스의 균일한 폭과 높이를 입력값으로 사용
+- 상대 속도는 시간 간격 동안 측정 카메라에 관측된 차량의 움직으로 추정
+    - 속도가 빠르더라도 먼 거리에 있는 차량은 이미지의 차이가 작음
+	- 속도가 느리더라도 근접 차량은 이미지의 차이가 큼
+
+## 모델 아키텍처
+
+- Monocular (이하 단안) depth와 3D 객체 검출 방법을 적용
+- U-net 구조를 도입하여 지도 학습에 의해 깊이를 예측
+- DORN 은 깊이를 순서형 회귀 문제로 간주
+- M3D-RPN 은 3D 바운딩 박스가 2D 이미지 공간에서 생성된 Convolution 특징을 활용할 수 있는 3D 영역을 제안
+- 상대속도는 이미지의 흐름을 3D 모션 필드로 나타냄
+	- Flownet2, PWC-Net을 통해 여러 신경망을 stack, warping
+	- 이를 통해, 여러 신경망을 통합하여 가볍고 빠른 신경망 구현
+
+![Screenshot 2023-12-20 at 2 57 16 PM](https://github.com/SeSAC-Men-in-Black/Men-in-Black/assets/140369529/33dce05b-d1f6-4bf7-b442-88e025baf8d0)
+
+<img width="1005" alt="Screenshot 2023-12-20 at 4 52 22 PM" src="https://github.com/SeSAC-Men-in-Black/Men-in-Black/assets/140369529/38f7bb53-64eb-43d3-842a-8553bc79dc22">
+
+## 데이터셋과 사전 훈련
+
+- Tusimple velocity 및 KITTI 데이터셋을 사용하여 평가
+
+
+## Loss Function and Evaluation Metrics
+
+1. Absolute Relative Error (REL): 
+$$
+\quad \text{REL} = \frac{1}{M} \sum_{i=1}^{M} \left| \frac{d_i - \hat{d}_i}{d_i} \right|
+$$
+2. Root Mean Squared Error (RMSE):
+$$
+\quad \text{RMSE} = \sqrt{\frac{1}{M} \sum_{i=1}^{M} \left| d_i - \hat{d}_i \right|^2}
+$$
+
+3. Average Log10 Error: 
+$$ 
+\quad \text{Average Log10 Error} = \frac{1}{M} \sum_{i=1}^{M} \left| \log_{10}(d_i) - \log_{10}(\hat{d}_i) \right| 
+$$
+
+4. Threshold Accuracy $(\delta^n)$:
+$$
+\begin{align*}
+\text{Percentage of pixels where} \quad \max \left( \frac{d_i}{\hat{d}_i}, \frac{\hat{d}_i}{d_i} \right) < 1.25^n \quad \text{for } n = 1, 2, 3 \\
+\delta^n &: \text{Threshold Accuracy for } n = 1, 2, 3 \\
+d_i &: \text{Ground Truth Depth at pixel } i \\
+\hat{d}_i &: \text{Predicted Depth at pixel } i \\
+M &: \text{Total Number of Pixels in the Image}
+\end{align*}
+$$
+
+5. Mean Relative Improvement across Datasets (mRID):
+$$
+\quad \text{mRID} = \frac{1}{M} \sum_{i=1}^{M} \text{RID}_i
+$$
+6. Mean Relative Improvement across Metrics (mRI$\theta$)
+$$
+\quad \text{mRI}\theta = \frac{1}{N} \sum_{j=1}^{N} \text{RI}\theta_j
+$$
+
+7. Relative Improvement (RI) for lower-is-better metrics:
+$$
+ \quad \text{RI} = \frac{r - t}{r}
+$$
+
+
+8. Relative Improvement (RI) for higher-is-better metrics:
+$$ \quad \text{RI} = \frac{t - r}{r} $$
+$$
+\\ r: \text{Reference Score} \\ t: \text{Target Score} $$
+
+
+- ZoeDepth는 scale-invariant log loss를 사용하여 깊이 추정의 정확도 측정
+	- 이 loss function은 깊이 추정에서의 스케일 불변성을 보장하여, 다양한 크기의 객체에 대한 깊이 추정을 일관되게 수행할 수 있도록 함
+- 모델의 성능 평가에는 정확도, 정밀도, 재현율과 같은 표준 메트릭스가 사용
+
+
+
+## 결과
+
+https://paperswithcode.com/paper/zoedepth-zero-shot-transfer-by-combining/review/
+
+**Table 1: Quantitative comparison on NYU-Depth v2. The reported numbers of prior art are from the corresponding original papers. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3 ↑|REL ↓|RMSE ↓|log10 ↓|
+|Eigen et al. [Eigen2014]|0.769|0.950|0.988|0.158|0.641|–|
+|Laina et al. [Laina2016]|0.811|0.953|0.988|0.127|0.573|0.055|
+|Hao et al. [Hao2018DetailPD]|0.841|0.966|0.991|0.127|0.555|0.053|
+|DORN [Fu2018DeepOR]|0.828|0.965|0.992|0.115|0.509|0.051|
+|SharpNet [Ramamonjisoa_2019_ICCV]|0.836|0.966|0.993|0.139|0.502|0.047|
+|Hu et al. [Hu2018RevisitingSI]|0.866|0.975|0.993|0.115|0.530|0.050|
+|Lee et al. [Lee2011]|0.837|0.971|0.994|0.131|0.538|–|
+|Chen et al. [ijcai2019-98]|0.878|0.977|0.994|0.111|0.514|0.048|
+|BTS [bts_lee2019big]|0.885|0.978|0.994|0.110|0.392|0.047|
+|Yin et al. [Yin_2019_ICCV]|0.875|0.976|0.994|0.108|0.416|0.048|
+|AdaBins [bhat2021adabins]|0.903|0.984|0.997|0.103|0.364|0.044|
+|LocalBins [bhat2022localbins]|0.907|0.987|0.998|0.099|0.357|0.042|
+|Jun et al. [jun2022depth]|0.913|0.987|0.998|0.098|0.355|0.042|
+|NeWCRFs [yuan2022new]|0.922|0.992|0.998|0.095|0.334|0.041|
+|ZoeD-X-N|0.946|0.994|0.999|0.082|0.294|0.035|
+|ZoeD-M12-N|0.955|0.995|0.999|0.075|0.270|0.032|
+|ZoeD-M12-NK|0.953|0.995|0.999|0.077|0.277|0.033|
+
+**Table 2: Comparison with existing works when trained on NYU and KITTI. Results are reported using the REL metric. The mRID column denotes the mean relative improvement with respect to NeWCRFs across datasets. X in the model name, means no architecture change and no pre-training. M12 means that the model was pre-trained (using our base model based on the DPT architecture with the BEiT-L encoder). All models are fine-tuned on NYU and KITTI. † denotes a single metric head (shared); single-head training allows us to adapt prior models without major changes. Best results are in bold, second best are underlined. PixelBins [pixelbinsSarwari:EECS-2021-32] did not converge without modification. We also tried to train AdaBins [bhat2021adabins] across both datasets, but despite our best effort and extensive hyperparameter tuning, it did not converge.**
+
+|   |   |   |   |   |   |
+|---|---|---|---|---|---|
+|Method|NYU|KITTI|iBims-1|vKITTI-2|mRID|
+|Baselines: no modification|   |   |   |   |   |
+|DORN-X-NK†|0.156|0.115|0.287|0.259|-45.7%|
+|LocalBins-X-NK†|0.245|0.133|0.296|0.265|-74.0%|
+|PixelBins-X-NK†|-|-|-|-|-|
+|NeWCRFs-X-NK†|0.109|0.076|0.189|0.190|0.0%|
+|Baselines: modified to use our pre-trained DPT-BEiT-L as backbone|   |   |   |   |   |
+|DORN-M12-NK†|0.110|0.081|0.242|0.215|-12.2%|
+|LocalBins-M12-NK†|0.086|0.071|0.221|0.121|11.8%|
+|PixelBins-M12-NK†|0.088|0.071|0.232|0.119|10.1%|
+|NeWCRFs-M12-NK†|0.088|0.073|0.233|0.124|8.7%|
+|Ours: different configuations for fair comparison|   |   |   |   |   |
+|ZoeD-X-NK†|0.095|0.074|0.187|0.184|4.9%|
+|ZoeD-M12-NK†|0.081|0.061|0.210|0.112|18.8%|
+|ZoeD-M12-NK|0.077|0.057|0.186|0.105|25.2%|
+
+**Table 3: Quantitative results for zero-shot transfer to four unseen indoor datasets. mRIθ denotes the mean relative improvement with respect to NeWCRFs across all metrics (δ1, REL, RMSE). Evaluation depth is capped at 8m for SUN RGB-D, 10m for iBims and DIODE Indoor, and 80m for HyperSim. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+||SUN RGB-D|   |   |   |iBims-1 Benchmark|   |   |   |DIODE Indoor|   |   |   |HyperSim|   |   |   |
+|Method|δ1 ↑|REL ↓|RMSE ↓|mRIθ ↑|δ1 ↑|REL ↓|RMSE ↓|mRIθ ↑|δ1 ↑|REL ↓|RMSE ↓|mRIθ ↑|δ1 ↑|REL ↓|RMSE ↓|mRIθ ↑|
+|BTS [bts_lee2019big]|0.740|0.172|0.515|-14.2%|0.538|0.231|0.919|-6.9%|0.210|0.418|1.905|2.3%|0.225|0.476|6.404|-8.6%|
+|AdaBins [bhat2021adabins]|0.771|0.159|0.476|-7.0%|0.555|0.212|0.901|-2.1%|0.174|0.443|1.963|-7.2%|0.221|0.483|6.546|-10.5%|
+|LocalBins [bhat2022localbins]|0.777|0.156|0.470|-5.6%|0.558|0.211|0.880|-0.7%|0.229|0.412|1.853|7.1%|0.234|0.468|6.362|-6.6%|
+|NeWCRFs [yuan2022new]|0.798|0.151|0.424|0.0%|0.548|0.206|0.861|0.0%|0.187|0.404|1.867|0.0%|0.255|0.442|6.017|0.0%|
+|ZoeD-X-N|0.857|0.124|0.363|13.2%|0.668|0.173|0.730|17.7%|0.400|0.324|1.581|49.7%|0.284|0.421|5.889|6.1%|
+|ZoeD-M12-N|0.864|0.119|0.346|16.0%|0.658|0.169|0.711|18.5%|0.376|0.327|1.588|45.0%|0.292|0.410|5.771|8.6%|
+|ZoeD-M12-NK|0.856|0.123|0.356|13.9%|0.615|0.186|0.777|10.6%|0.386|0.331|1.598|46.3%|0.274|0.419|5.830|5.3%|
+
+**Table 4: Quantitative results for zero-shot transfer to four unseen outdoor datasets. mRIθ denotes the mean relative improvement with respect to NeWCRFs across all metrics (δ1, REL, RMSE). Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+||Virtual KITTI 2|   |   |   |DDAD|   |   |   |DIML Outdoor|   |   |   |DIODE Outdoor|   |   |   |
+|Method|δ1 ↑|REL ↓|RMSE ↓|mRIθ ↑|δ1 ↑|REL ↓|RMSE ↓|mRIθ ↑|δ1 ↑|REL ↓|RMSE ↓|mRIθ ↑|δ1 ↑|REL ↓|RMSE ↓|mRIθ ↑|
+|BTS [bts_lee2019big]|0.831|0.115|5.368|2.5%|0.805|0.147|7.550|-17.8%|0.016|1.785|5.908|24.3%|0.171|0.837|10.48|-4.8%|
+|AdaBins [bhat2021adabins]|0.826|0.122|5.420|0.0%|0.766|0.154|8.560|-26.7%|0.013|1.941|6.272|9.7%|0.161|0.863|10.35|-7.2%|
+|LocalBins [bhat2022localbins]|0.810|0.127|5.981|-5.3%|0.777|0.151|8.139|-23.2%|0.016|1.820|6.706|19.5%|0.170|0.821|10.27|-3.6%|
+|NeWCRFs [yuan2022new]|0.829|0.117|5.691|0.0%|0.874|0.119|6.183|0.0%|0.010|1.918|6.283|0.0%|0.176|0.854|9.228|0.0%|
+|ZoeD-X-K|0.837|0.112|5.338|3.8%|0.790|0.137|7.734|-16.6%|0.005|1.756|6.180|-13.3%|0.242|0.799|7.806|19.8%|
+|ZoeD-M12-K|0.864|0.100|4.974|10.5%|0.835|0.129|7.108|-9.3%|0.003|1.921|6.978|-27.1%|0.269|0.852|6.898|26.1%|
+|ZoeD-M12-NK|0.850|0.105|5.095|7.8%|0.824|0.138|7.225|-12.8%|0.292|0.641|3.610|976.4%|0.208|0.757|7.569|15.8%|
+
+**Table 5: Metric head variants. The “Config” column specifies the split factor in case of the splitter variant and the number of attractors {nla} for attractor variants. The reported results are all based on ZoeD-M12-N evaluated on NYU Depth v2. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |
+|---|---|---|---|---|
+|Metric head type|   |   |REL ↓|RMSE ↓|
+|Type|Variant|Config|||
+|Naive head|-|-|0.096|0.335|
+|Metric bins|Splitter|factor = 2|0.085|0.301|
+|Metric bins|Exponential Attractor|{16,8,4,1}|0.086|0.305|
+|Metric bins|Inverse Attractor|{8,8,8,8}|0.081|0.295|
+|Metric bins|Inverse Attractor|{16,2,2,16}|0.081|0.291|
+|Metric bins|Inverse Attractor|{1,4,8,16}|0.080|0.287|
+|Metric bins|Inverse Attractor|{16,8,4,1}|0.075|0.270|
+
+**Table 6: Router variants. The reported results are all based on ZoeD-M12-NK evaluated on NYU Depth v2 and KITTI. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+||Labels required|   |REL ↓|   |RMSE ↓|   |
+|Variant|Train|Inference|NYU|KITTI|NYU|KITTI|
+|Labeled Router|✓|✓|0.080|0.057|0.290|2.452|
+|Trained Router|✓|✗|0.077|0.057|0.277|2.362|
+|Auto Router|✗|✗|0.102|0.075|0.377|2.584|
+
+**Table 7: Overview of datasets used in metric depth fine-tuning and evaluation of ZoeDepth architectures. For demonstrating zero-shot transfer, we evaluate across a total of 13165 indoor samples and 6597 outdoor samples. While HyperSim is predominantly an indoor dataset, there are several samples exhibiting depth ranges exceeding 10 m, so we relax the maximum evaluation depth up to 80 m. ‡ : To follow prior works [yuan2022new, bhat2021adabins], we crop the sample and then use scaled Garg crop for evaluation. We verify the transforms by reproducing results obtained by using respective pre-trained checkpoints provided by prior works.**
+
+|   |   |   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|---|---|
+||||Seen in|# Train|# Eval|Eval Depth [m]|   |Crop|
+|Dataset|Domain|Type|Training?|Samples|Samples|Min|Max|Method|
+|NYU Depth v2 [Silberman2012]|Indoor|Real|✓|24k [bts_lee2019big]|654|1e-3|10|Eigen|
+|SUN RGB-D [Song2015_sunrgbd]|Indoor|Real|✗|-|5050|1e-3|8|Eigen|
+|iBims-1 [koch2019]|Indoor|Real|✗|-|100|1e-3|10|Eigen|
+|DIODE Indoor [diode_dataset]|Indoor|Real|✗|-|325|1e-3|10|Eigen|
+|HyperSim [roberts:2021]|Indoor|Synthetic|✗|-|7690|1e-3|80|Eigen|
+|KITTI [Menze_2015_CVPR]|Outdoor|Real|✓|26k [bts_lee2019big]|697|1e-3|80|Garg‡|
+|Virtual KITTI 2 [cabon2020vkitti2]|Outdoor|Synthetic|✗|-|1701|1e-3|80|Garg‡|
+|DDAD [packnet]|Outdoor|Real|✗|-|3950|1e-3|80|Garg|
+|DIML Outdoor [kim2018deep]|Outdoor|Real|✗|-|500|1e-3|80|Garg|
+|DIODE Outdoor [diode_dataset]|Outdoor|Real|✗|-|446|1e-3|80|Garg|
+
+**Table 8: Models are named according to the following convention: ZoeD-RDPT-MFT, where ZoeD is the abbreviation for ZoeDepth, RDPT denotes the datasets used for relative depth pre-training and MFT denotes the datasets used for metric depth fine-tuning. Models with an X do not use a relative depth pre-training. The collection M12 contains the datasets HRWSI [xian2020structure], BlendedMVS [yao2020blendedmvs], ReDWeb [xian2018monocular], DIML-Indoor [kim2018deep], 3D Movies [Ranftl2020MiDaS], MegaDepth [MDLi18], WSVD [wang2019web], TartanAir [wang2020tartanair], ApolloScape [huang2019apolloscape], IRS [wang2019irs], KITTI (K) [Menze_2015_CVPR] and NYU Depth v2 (N) [Silberman2012].**
+
+|   |   |   |   |
+|---|---|---|---|
+|Model|Relative depth pre-training|Metric depth fine-tuning|# metric heads|
+|ZoeD-X-N|✗|NYU|1|
+|ZoeD-N-N|NYU|NYU|1|
+|ZoeD-NK-N|NYU+KITTI|NYU|1|
+|ZoeD-M12-N|M12|NYU|1|
+|ZoeD-X-K|✗|KITTI|1|
+|ZoeD-K-K|KITTI|KITTI|1|
+|ZoeD-NK-K|NYU+KITTI|KITTI|1|
+|ZoeD-M12-K|M12|KITTI|1|
+|ZoeD-NK-NK†|NYU+KITTI|NYU+KITTI|1|
+|ZoeD-M12-NK†|M12|NYU+KITTI|1|
+|ZoeD-NK-NK|NYU+KITTI|NYU+KITTI|2|
+|ZoeD-M12-NK|M12|NYU+KITTI|2|
+
+**Table 9: Zero-shot transfer to the SUN RGB-D dataset [Song2015_sunrgbd]. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3↑|REL ↓|RMSE ↓|log10↓|
+|BTS [bts_lee2019big]|0.740|0.933|0.980|0.172|0.515|0.075|
+|AdaBins [bhat2021adabins]|0.771|0.944|0.983|0.159|0.476|0.068|
+|LocalBins [bhat2022localbins]|0.777|0.949|0.985|0.156|0.470|0.067|
+|NeWCRF [yuan2022new]|0.798|0.967|0.992|0.151|0.424|0.064|
+|ZoeD-X-N|0.857|0.979|0.995|0.124|0.363|0.054|
+|ZoeD-NK-N|0.857|0.978|0.994|0.125|0.360|0.054|
+|ZoeD-M12-N|0.864|0.982|0.995|0.119|0.346|0.052|
+|ZoeD-M12-NK|0.856|0.979|0.995|0.123|0.356|0.053|
+
+**Table 10: Zero-shot transfer to the iBims-1 benchmark [koch2019]. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3↑|REL ↓|RMSE ↓|log10↓|
+|BTS [bts_lee2019big]|0.538|0.863|0.948|0.231|0.919|0.112|
+|AdaBins [bhat2021adabins]|0.555|0.873|0.960|0.212|0.901|0.107|
+|LocalBins [bhat2022localbins]|0.558|0.877|0.966|0.211|0.880|0.104|
+|NeWCRF [yuan2022new]|0.548|0.884|0.979|0.206|0.861|0.102|
+|ZoeD-X-N|0.668|0.944|0.983|0.173|0.730|0.084|
+|ZoeD-NK-N|0.671|0.939|0.983|0.172|0.735|0.084|
+|ZoeD-M12-N|0.658|0.947|0.985|0.169|0.711|0.083|
+|ZoeD-M12-NK|0.615|0.928|0.982|0.186|0.777|0.092|
+
+**Table 11: Zero-shot transfer to the DIODE Indoor dataset [diode_dataset]. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3↑|REL ↓|RMSE ↓|log10↓|
+|BTS [bts_lee2019big]|0.210|0.478|0.699|0.418|1.905|0.250|
+|AdaBins [bhat2021adabins]|0.174|0.438|0.658|0.443|1.963|0.270|
+|LocalBins [bhat2022localbins]|0.229|0.520|0.718|0.412|1.853|0.246|
+|NeWCRF [yuan2022new]|0.187|0.498|0.748|0.404|1.867|0.241|
+|ZoeD-X-N|0.400|0.704|0.808|0.324|1.581|0.181|
+|ZoeD-NK-N|0.365|0.696|0.819|0.335|1.604|0.188|
+|ZoeD-M12-N|0.376|0.696|0.822|0.327|1.588|0.186|
+|ZoeD-M12-NK|0.386|0.695|0.807|0.331|1.598|0.185|
+
+**Table 12: Zero-shot transfer to the HyperSim dataset [roberts:2021]. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3↑|REL ↓|RMSE ↓|log10↓|
+|BTS [bts_lee2019big]|0.225|0.419|0.582|0.476|6.404|0.329|
+|AdaBins [bhat2021adabins]|0.221|0.410|0.568|0.483|6.546|0.345|
+|LocalBins [bhat2022localbins]|0.234|0.432|0.594|0.468|6.362|0.320|
+|NeWCRF [yuan2022new]|0.255|0.464|0.638|0.442|6.017|0.283|
+|ZoeD-X-N|0.284|0.502|0.692|0.421|5.889|0.267|
+|ZoeD-NK-N|0.291|0.519|0.700|0.414|5.838|0.260|
+|ZoeD-M12-N|0.292|0.514|0.706|0.410|5.771|0.257|
+|ZoeD-M12-NK|0.274|0.494|0.696|0.419|5.830|0.262|
+
+**Table 13: Zero-shot transfer to the Virtual KITTI 2 dataset [cabon2020vkitti2]. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3↑|REL ↓|RMSE ↓|log10↓|
+|BTS [bts_lee2019big]|0.831|0.948|0.982|0.115|5.368|0.054|
+|AdaBins [bhat2021adabins]|0.826|0.947|0.98|0.122|5.42|0.057|
+|LocalBins [bhat2022localbins]|0.810|0.94|0.978|0.127|5.981|0.061|
+|NeWCRF [yuan2022new]|0.829|0.951|0.984|0.117|5.691|0.056|
+|ZoeD-X-K|0.837|0.965|0.991|0.112|5.338|0.053|
+|ZoeD-NK-K|0.855|0.970|0.992|0.101|5.102|0.048|
+|ZoeD-M12-K|0.864|0.973|0.992|0.100|4.974|0.046|
+|ZoeD-M12-NK|0.850|0.965|0.991|0.105|5.095|0.050|
+
+**Table 14: Zero-shot transfer to the DDAD dataset [packnet]. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3↑|REL ↓|RMSE ↓|log10↓|
+|BTS [bts_lee2019big]|0.805|0.945|0.982|0.147|7.550|0.067|
+|AdaBins [bhat2021adabins]|0.766|0.918|0.972|0.154|8.560|0.074|
+|LocalBins [bhat2022localbins]|0.777|0.930|0.978|0.151|8.139|0.071|
+|NeWCRF [yuan2022new]|0.874|0.974|0.991|0.119|6.183|0.054|
+|ZoeD-X-K|0.790|0.95|0.985|0.137|7.734|0.066|
+|ZoeD-NK-K|0.824|0.957|0.987|0.134|7.249|0.062|
+|ZoeD-M12-K|0.835|0.962|0.988|0.129|7.108|0.060|
+|ZoeD-M12-NK|0.824|0.951|0.980|0.138|7.225|0.066|
+
+**Table 15: Zero-shot transfer to the DIML Outdoor dataset [kim2018deep]. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3↑|REL ↓|RMSE ↓|log10↓|
+|BTS [bts_lee2019big]|0.016|0.042|0.123|1.785|5.908|0.428|
+|AdaBins [bhat2021adabins]|0.013|0.038|0.107|1.941|6.272|0.451|
+|LocalBins [bhat2022localbins]|0.016|0.044|0.124|1.82|6.706|0.434|
+|NeWCRF [yuan2022new]|0.010|0.032|0.094|1.918|6.283|0.449|
+|ZoeD-X-K|0.005|0.022|0.096|1.756|6.180|0.429|
+|ZoeD-NK-K|0.004|0.012|0.047|2.068|7.432|0.473|
+|ZoeD-M12-K|0.003|0.010|0.048|1.921|6.978|0.455|
+|ZoeD-M12-NK|0.292|0.562|0.697|0.641|3.610|0.213|
+
+**Table 16: Zero-shot transfer to the DIODE Outdoor dataset [diode_dataset]. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3↑|REL ↓|RMSE ↓|log10↓|
+|BTS [bts_lee2019big]|0.171|0.347|0.526|0.837|10.48|0.334|
+|AdaBins [bhat2021adabins]|0.161|0.329|0.529|0.863|10.35|0.318|
+|LocalBins [bhat2022localbins]|0.170|0.336|0.531|0.821|10.273|0.329|
+|NeWCRF [yuan2022new]|0.176|0.369|0.588|0.854|9.228|0.283|
+|ZoeD-X-K|0.242|0.485|0.744|0.799|7.806|0.219|
+|ZoeD-NK-K|0.241|0.505|0.759|0.892|7.489|0.216|
+|ZoeD-M12-K|0.269|0.563|0.816|0.852|6.898|0.198|
+|ZoeD-M12-NK|0.208|0.405|0.586|0.757|7.569|0.258|
+
+|   |   |   |
+|---|---|---|
+|Method|Encoder|# Params|
+|Eigen et al. [Eigen2014]|-|141M|
+|Laina et al. [Laina2016]|ResNet-50|64M|
+|Hao et al. [Hao2018DetailPD]|ResNet-101|60M|
+|Lee et al. [Lee2011]|-|119M|
+|Fu et al. [Fu2018DeepOR]|ResNet-101|110M|
+|SharpNet [Ramamonjisoa_2019_ICCV]|-|-|
+|Hu et al. [Hu2018RevisitingSI]|SENet-154|157M|
+|Chen et al. [ijcai2019-98]|SENet|210M|
+|Yin et al. [Yin_2019_ICCV]|ResNeXt-101|114M|
+|BTS [bts_lee2019big]|DenseNet-161|47M|
+|AdaBins [bhat2021adabins]|EfficientNet-B5|78M|
+|LocalBins [bhat2022localbins]|EfficientNet-B5|74M|
+|NeWCRFs [yuan2022new]|Swin-L|270M|
+|ZoeDepth (S-L)|Swin-L|212M|
+|ZoeDepth (S2-T)|Swin2-T|42M|
+|ZoeDepth (S2-B)|Swin2-B|102M|
+|ZoeDepth (S2-L)|Swin2-L|214M|
+|ZoeDepth (B-B)|Beit-B|112M|
+|ZoeDepth (B-L)|Beit-L|345M|
+
+**Table 18: Results on the NYU Depth V2 dataset with different backbones. Best results are in bold, second best are underlined.**
+
+|   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|
+|Method|δ1↑|δ2↑|δ3↑|REL ↓|RMSE ↓|log10↓|
+|BTS [bts_lee2019big]|0.885|0.978|0.994|0.110|0.392|0.047|
+|AdaBins [bhat2021adabins]|0.903|0.984|0.997|0.103|0.364|0.044|
+|LocalBins [bhat2022localbins]|0.907|0.987|0.998|0.099|0.357|0.042|
+|NeWCRFs [yuan2022new]|0.922|0.992|0.998|0.095|0.334|0.041|
+|ZoeD-M12-N (S-L)|0.937|0.992|0.998|0.086|0.310|0.037|
+|ZoeD-M12-N (S2-T)|0.899|0.982|0.995|0.106|0.371|0.045|
+|ZoeD-M12-N (S2-B)|0.927|0.992|0.999|0.090|0.313|0.038|
+|ZoeD-M12-N (S2-L)|0.943|0.993|0.999|0.083|0.296|0.035|
+|ZoeD-M12-N (B-B)|0.922|0.990|0.998|0.093|0.329|0.040|
+|ZoeD-M12-N (B-L)|0.955|0.995|0.999|0.075|0.270|0.032|
+
+Includes three main models :
+
+- ZoeD-M12-N
+- ZoeD-M12-K
+- ZoeD-M12-NK
+
+Performance (REL):
+
+|Model|Backbone|NYU|SUN RGBD|iBims-1|DIODE Indoor|Hypersim|
+|:-:|:-:|:-:|---|---|---|---|
+|ZoeD-M12-N|BEiT-L-384|0.075|0.119|0.169|0.327|0.410|
+
+|Model|Backbone|NYU|SUN RGBD|iBims-1|DIODE Indoor|Hypersim|Virtual KITTI 2|DDAD|DIML Outdoor|DIODE Outdoor|
+|:-:|:-:|:-:|---|---|---|---|---|---|---|---|
+|ZoeD-M12-NK|BEiT-L-384|0.077|0.123|0.186|0.331|0.419|0.105|0.138|0.641|0.757|
+
+|Model|Backbone|Virtual KITTI 2|DDAD|DIML Outdoor|DIODE Outdoor|
+|:-:|:-:|---|---|---|---|
+|ZoeD-M12-K|BEiT-L-384|0.100|0.129|1.921|0.852|
+
+
+
+
