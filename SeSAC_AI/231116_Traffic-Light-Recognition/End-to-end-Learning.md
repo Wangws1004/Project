@@ -16,7 +16,7 @@
 - 2D 바운딩 박스가 3D 바운딩 박스 투영을 둘러싸고 있다고 가정하여 차량 거리 회귀 모델 제안
 	- 감지된 2D 바운딩 박스의 균일한 폭과 높이를 입력값으로 사용
 - 상대 속도는 시간 간격 동안 측정 카메라에 관측된 차량의 움직으로 추정
-    - 속도가 빠르더라도 먼 거리에 있는 차량은 이미지의 차이가 작음
+	- 속도가 빠르더라도 먼 거리에 있는 차량은 이미지의 차이가 작음
 	- 속도가 느리더라도 근접 차량은 이미지의 차이가 큼
 
 ## 모델 아키텍처
@@ -39,9 +39,12 @@
 - FlyingChairs에 사전 훈련된 PWCNet을 기반으로 Feature map과 flow map을 통합하기 위해 7x7 ROI Align 사용
 - Conv layer size : 3x3, 7x7
 - Resize Image : 284 x 448
-- 4가지 벡터를 병합 (concatenating the geometric vector, deep feature vector and flow vector)
-- 합쳐진 레이어들에 ReLU 활성화 함수를 사용 (4 fully connected layers with ReLU activation function are employed to compute the distance and velocity)
-- 전체 신경망을 PyTorch로 구현했으며, 손실함수는 ADAM을 사용 (The whole network is implemented in PyTorch and trained end-to-end by optimizing the loss function with ADAM)
+- 4가지 벡터를 병합
+  (concatenating the geometric vector, deep feature vector and flow vector)
+- 합쳐진 레이어들에 ReLU 활성화 함수를 사용
+  (4 fully connected layers with ReLU activation function are employed to compute the distance and velocity)
+- 전체 신경망을 PyTorch로 구현했으며, 손실함수는 ADAM을 사용
+  (The whole network is implemented in PyTorch and trained end-to-end by optimizing the loss function with ADAM)
 
 
 ## Loss Function and Evaluation Metrics
