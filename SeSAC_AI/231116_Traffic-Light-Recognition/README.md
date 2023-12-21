@@ -19,7 +19,7 @@
 
 ## 진행 과정:
 
-- Model: Yolov8m epochs = 200, batch = 32, lrf = 0.001
+- Model: Yolov8m epochs = 200, batch = 32, lrf = 0.001
     
 - Dataset: [Roboflow - Traffic light Computer Vision Project](https://universe.roboflow.com/trafficlightdetect/traffic-light-ke5b5)
     
@@ -34,7 +34,9 @@
 
 
 <img width="857" alt="Screenshot 2023-12-21 at 1 54 37 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e5afd348-70b5-484a-9195-56a986e5f8b0">
-                
+
+
+
 - Training:
     
 hyper parameters:
@@ -43,10 +45,14 @@ hyper parameters:
 yolo/engine/trainer: task=detect, mode=train, model=yolov8m.pt, data=/content/Traffic_light/data.yaml, epochs=200, patience=50, batch=32, imgsz=640, save=True, save_period=-1, cache=False, device=None, workers=8, project=None, name=None, exist_ok=False, pretrained=False, optimizer=SGD, verbose=True, seed=0, deterministic=True, single_cls=False, image_weights=False, rect=False, cos_lr=False, close_mosaic=0, resume=False, amp=True, overlap_mask=True, mask_ratio=4, dropout=0.0, val=True, split=val, save_json=False, save_hybrid=False, conf=None, iou=0.7, max_det=300, half=False, dnn=False, plots=True, source=None, show=False, save_txt=False, save_conf=False, save_crop=False, show_labels=True, show_conf=True, vid_stride=1, line_thickness=3, visualize=False, augment=False, agnostic_nms=False, classes=None, retina_masks=False, boxes=True, format=torchscript, keras=False, optimize=False, int8=False, dynamic=False, simplify=False, opset=None, workspace=4, nms=False, lr0=0.01, lrf=0.001, momentum=0.937, weight_decay=0.0005, warmup_epochs=3.0, warmup_momentum=0.8, warmup_bias_lr=0.1, box=7.5, cls=0.5, dfl=1.5, pose=12.0, kobj=1.0, label_smoothing=0.0, nbs=64, hsv_h=0.015, hsv_s=0.7, hsv_v=0.4, degrees=0.0, translate=0.1, scale=0.5, shear=0.0, perspective=0.0, flipud=0.0, fliplr=0.5, mosaic=1.0, mixup=0.0, copy_paste=0.0, cfg=None, v5loader=False, tracker=botsort.yaml, save_dir=runs/detect/train21
 Overriding model.yaml nc=80 with nc=4`
 
+
+
 model summary:
 
 
 <img width="765" alt="Screenshot 2023-12-21 at 1 46 12 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e423bcc2-ccdc-4beb-b1c9-b8c7f79fc46c">
+
+
 
 ## WandB
 - Confusion matrix
@@ -66,6 +72,7 @@ model summary:
 
 - Result
 ![Traffic_light_result](https://github.com/Wangws1004/WS_Project/assets/140369529/65ed54e7-51c8-4372-9292-aa03c3bd5b29)
+
 
 
 ## 결과
