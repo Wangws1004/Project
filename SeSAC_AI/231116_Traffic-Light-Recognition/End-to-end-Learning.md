@@ -35,14 +35,13 @@
 
 ## 데이터셋과 사전 훈련
 
-- Tusimple velocity Dataset : 20 fps, 40 frame 비디오 시퀀
-- KITTI Dataset
+- 총 2가지 Dataset 활용 : Tusimple velocity(20 fps, 40 frame 비디오 시퀀스), KITTI
 - FlyingChairs에 사전 훈련된 PWCNet을 기반으로 Feature map과 flow map을 통합하기 위해 7x7 ROI Align 사용
 - Conv layer size : 3x3, 7x7
-- Resize 284 x 448
-- concatenating the geometric vector, deep feature vector and flow vector
-- 4 fully connected layers with ReLU activation function are employed to compute the distance and velocity
-- The whole network is implemented in PyTorch and trained end-to-end by optimizing the loss function with ADAM
+- Resize Image : 284 x 448
+- 4가지 벡터를 병합 (concatenating the geometric vector, deep feature vector and flow vector)
+- 합쳐진 레이어들에 ReLU 활성화 함수를 사용 (4 fully connected layers with ReLU activation function are employed to compute the distance and velocity)
+- 전체 신경망을 PyTorch로 구현했으며, 손실함수는 ADAM을 사용 (The whole network is implemented in PyTorch and trained end-to-end by optimizing the loss function with ADAM)
 
 
 ## Loss Function and Evaluation Metrics
@@ -61,21 +60,20 @@
 - 표 가장 아래 3개의 정확도 메트릭이 나타나 있으며, 가장 위에 오차 메트릭(첫 네 가지)은 낮을수록 좋고, 정확도 메트릭(마지막 세 가지)은 높을수록 성능이 좋음
 - "ours full" 모델은 대체적으로 "ours org"보다 조금 더 높은 오차를 보이지만, 두 모델 모두 1.25, 1.25^2, 1.25^3의 정확도 임계값에서는 1.00의 완벽한 점수를 받음
 - 이는 두 모델이 해당 임계값 이내에서 거리를 추정하는 데 매우 정확하다는 것을 의미
-
-- 오차 메트릭은 모델의 예측이 얼마나 정확한지를 평가하기 위해 사용되며, 이 값이 낮을수록 모델의 예측이 실제 값에 더 가깝다는 것을 의미
-- 일반적으로 사용되는 오차 메트릭으로는 절대 상대 오차(AbsRel), 제곱 상대 오차(SqRel), 루트 평균 제곱 오차(RMS), 로그 스케일에서의 RMS(RMSlog) 등이 있음
-- 정확도 메트릭은 모델 예측이 얼마나 종종 정확한 임계값 내에 있는지를 평가
-- 예측이 실제 값의 특정 배수 이내인 경우의 비율을 나타내는 임계값이 메트릭이 높을수록 더 많은 예측이 정확한 범위 내에 있음을 나타냄
+	- 오차 메트릭은 모델의 예측이 얼마나 정확한지를 평가하기 위해 사용되며, 이 값이 낮을수록 모델의 예측이 실제 값에 더 가깝다는 것을 의미
+	- 일반적으로 사용되는 오차 메트릭으로는 절대 상대 오차(AbsRel), 제곱 상대 오차(SqRel), 루트 평균 제곱 오차(RMS), 로그 스케일에서의 RMS(RMSlog) 등이 있음
+	- 정확도 메트릭은 모델 예측이 얼마나 종종 정확한 임계값 내에 있는지를 평가
+	- 예측이 실제 값의 특정 배수 이내인 경우의 비율을 나타내는 임계값이 메트릭이 높을수록 더 많은 예측이 정확한 범위 내에 있음을 나타냄
   
 ![KakaoTalk_20231221_005632389_02](https://github.com/SeSAC-Men-in-Black/Men-in-Black/assets/140369529/b831074b-b887-4137-8e8b-d4b597f03523)
 - 표 IV와 V는 KITTI 데이터셋에서의 속도 추정과 거리 추정 결과를 보여줌
 - 표 IV에서는 "ours full" 모델이 가까운 거리(MSE(near)), 중간 거리(MSE(medium)), 먼 거리(MSE(far)), 그리고 평균(MSE(average))에 대한 평균 제곱 오차를 나타냄
 - 표 V에서는 "ours" 모델이 3DBox, DORN, Unsfm과 같은 다른 네트워크와 비교하여 거리 추정을 위한 다양한 메트릭(AbsRel, SqRel, RMS, RMSlog) 및 정확도 임계값을 기반으로 성능을 평가
 - "ours" 모델은 거의 모든 메트릭에서 뛰어난 성능을 보이며, 특히 정확도 임계값에서는 가장 높은 점수를 기록
+	- 3Dbox는 3차원 객체 탐지 네트워크
+	- DORN (Deep Ordinal Regression Network)은 깊이 예측을 위한 네트워크로, 정확한 깊이 순서를 학습하는 것을 목표로 함
+	- Unsfm은 또 다른 깊이 예측 네트워크로, 비정형적인 장면 구조에서도 성능을 발휘하도록 설계
 
-- 3Dbox는 3차원 객체 탐지 네트워크
-- DORN (Deep Ordinal Regression Network)은 깊이 예측을 위한 네트워크로, 정확한 깊이 순서를 학습하는 것을 목표로 함
-- Unsfm은 또 다른 깊이 예측 네트워크로, 비정형적인 장면 구조에서도 성능을 발휘하도록 설계
 
 ## 결과
 - 차량 추적이나 도로의 분할 없이 단안 렌즈의 두 이미지 시퀀스를 통해 공간적, 시간적 분석
