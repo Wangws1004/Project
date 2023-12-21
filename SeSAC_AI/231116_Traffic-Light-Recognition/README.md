@@ -44,7 +44,9 @@ yolo/engine/trainer: task=detect, mode=train, model=yolov8m.pt, data=/content/Tr
 Overriding model.yaml nc=80 with nc=4`
 
 model summary:
-' <img width="765" alt="Screenshot 2023-12-21 at 1 46 12 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e423bcc2-ccdc-4beb-b1c9-b8c7f79fc46c">
+
+
+<img width="765" alt="Screenshot 2023-12-21 at 1 46 12 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e423bcc2-ccdc-4beb-b1c9-b8c7f79fc46c">
 
 ## WandB
 - Confusion matrix
