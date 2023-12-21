@@ -31,7 +31,9 @@
             - RandomRotation(10),  # 최대 10도까지 무작위로 회전
             - RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=10),  # 무작위로 이동, 크기 조절, 기울임 변환
             - GaussianBlur(kernel_size=3),  # 가우시안 블러 적용
-'<img width="857" alt="Screenshot 2023-12-21 at 1 54 37 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e5afd348-70b5-484a-9195-56a986e5f8b0">
+
+
+<img width="857" alt="Screenshot 2023-12-21 at 1 54 37 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e5afd348-70b5-484a-9195-56a986e5f8b0">
                 
 - Training:
     
@@ -66,10 +68,12 @@ model summary:
 
 ## 결과
 - Train image
-    '![Traffic_light_train_image_sample](https://github.com/Wangws1004/WS_Project/assets/140369529/eceb3a9a-fb2e-41cc-9200-043aa545d870)
+
+![Traffic_light_train_image_sample](https://github.com/Wangws1004/WS_Project/assets/140369529/eceb3a9a-fb2e-41cc-9200-043aa545d870)
 
 - Valid Image
-    '![Traffic_light_valid_image_sample](https://github.com/Wangws1004/WS_Project/assets/140369529/fe6e84e2-43a1-488f-a316-50b9554923f5)
+
+![Traffic_light_valid_image_sample](https://github.com/Wangws1004/WS_Project/assets/140369529/fe6e84e2-43a1-488f-a316-50b9554923f5)
  
 
 
