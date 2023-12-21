@@ -31,6 +31,7 @@
             - RandomRotation(10),  # 최대 10도까지 무작위로 회전
             - RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=10),  # 무작위로 이동, 크기 조절, 기울임 변환
             - GaussianBlur(kernel_size=3),  # 가우시안 블러 적용
+'<img width="857" alt="Screenshot 2023-12-21 at 1 54 37 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e5afd348-70b5-484a-9195-56a986e5f8b0">
                 
 - Training:
     
@@ -41,9 +42,9 @@ yolo/engine/trainer: task=detect, mode=train, model=yolov8m.pt, data=/content/Tr
 Overriding model.yaml nc=80 with nc=4`
 
 model summary:
-- <img width="765" alt="Screenshot 2023-12-21 at 1 46 12 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e423bcc2-ccdc-4beb-b1c9-b8c7f79fc46c">
+' <img width="765" alt="Screenshot 2023-12-21 at 1 46 12 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e423bcc2-ccdc-4beb-b1c9-b8c7f79fc46c">
 
-#### WandB
+## WandB
 - Confusion matrix
 ![Traffic_light_confusion_matrix](https://github.com/Wangws1004/WS_Project/assets/140369529/2ff90079-120c-4010-8142-2a06ed8c00cb)
 
@@ -63,20 +64,12 @@ model summary:
 ![Traffic_light_result](https://github.com/Wangws1004/WS_Project/assets/140369529/65ed54e7-51c8-4372-9292-aa03c3bd5b29)
 
 
-## 3. 데이터셋 & 사용 툴
-- 24242 images
-- 데이터 증강(Augmentation)
-  - Flip: Horizontal 
-  - Crop: 0% Minimum Zoom, 15% Maximum Zoom 
-  - Rotation: Between -10° and +10° 
-  - Shear: ±2° Horizontal, ±2° Vertical 
-  - Grayscale: Apply to 10% of images 
-  - Hue: Between -15° and +15° 
-  - Saturation: Between -15% and +15% 
-  - Brightness: Between -15% and +15% 
-  - Exposure: Between -15% and +15% 
-  - Blur: Up to 0.5px 
-  - Cutout: 5 boxes with 2% size each
+## 결과
+- Train image
+    '![Traffic_light_train_image_sample](https://github.com/Wangws1004/WS_Project/assets/140369529/eceb3a9a-fb2e-41cc-9200-043aa545d870)
+
+- Valid Image
+    '![Traffic_light_valid_image_sample](https://github.com/Wangws1004/WS_Project/assets/140369529/fe6e84e2-43a1-488f-a316-50b9554923f5)
  
-<img width="857" alt="Screenshot 2023-12-21 at 1 54 37 PM" src="https://github.com/Wangws1004/WS_Project/assets/140369529/e5afd348-70b5-484a-9195-56a986e5f8b0">
+
 
