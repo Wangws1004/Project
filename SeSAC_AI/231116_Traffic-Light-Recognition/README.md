@@ -9,20 +9,11 @@
 ## 2. 프로젝트 구성 및 담당자
 
 ### [Line Violation Detection](https://github.com/SeSAC-Men-in-Black/Men-in-Black/tree/074ad63391bab45290966de5b0f9d747f9a252ae/Line%20violation%20detection) by [진한별](https://github.com/Moonbyeol)
-<details>
-<summary>Details</summary>
-<br>
-</details>
 
 ### [Traffic Light Recognition](https://github.com/SeSAC-Men-in-Black/Men-in-Black/tree/main/Traffic%20Light) by [최우석](https://github.com/Wangws1004)
-<details>
-<summary>Details</summary>
-<br>
-</details>
 
 ### [License Plate Recognition](https://github.com/SeSAC-Men-in-Black/Men-in-Black/tree/main/Automatic%20License%20Plate%20Recognition) by [신승엽](https://github.comsyshin0116)
-<details>
-<summary>Details</summary>
+
 
 # Traffic Light Recognition
 
